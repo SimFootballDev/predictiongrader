@@ -15,11 +15,16 @@ class PredictionGraderApplication {
 
     @RequestMapping("/")
     fun getIndex(): String {
-        return "<form action=/results>Post URL<br><input name=postUrl><br><br>Correct Predictions (comma separated)<br><input name=correctPredictions><br><br><input type=submit></form>"
+        return "<form action=/results>Post URL<br><input name=postUrl><br><br>Correct Predictions (comma separated)<br><input name=correctPredictions><br><br>Base TPE Reward<br><input name=baseTPE value=0><br><br>Per Prediction TPE Reward<br><input name=perPredictionTPE value=0.5><br><br><input type=submit></form>"
     }
 
     @RequestMapping("/results")
-    fun getResults(@RequestParam correctPredictions: String, @RequestParam postUrl: String): String {
+    fun getResults(
+            @RequestParam postUrl: String,
+            @RequestParam correctPredictions: String,
+            @RequestParam baseTPE: Double,
+            @RequestParam perPredictionTPE: Double
+    ): String {
 
         val correctPredictionList =
                 correctPredictions.toLowerCase().split(",").map { Prediction.fromName(it) }
@@ -93,8 +98,16 @@ class PredictionGraderApplication {
                 }
 
                 val result = Pair(
-                        if (username.isEmpty()) "Guest" else username,
-                        if (correctPredictionCount == -1) -1.0 else correctPredictionCount * 0.5
+                        if (username.isEmpty()) {
+                            "Guest"
+                        } else {
+                            username
+                        },
+                        if (correctPredictionCount == -1) {
+                            -1.0
+                        } else {
+                            baseTPE + (correctPredictionCount * perPredictionTPE)
+                        }
                 )
 
                 if (username.isNotEmpty() && correctPredictionCount != -1) {
@@ -112,13 +125,14 @@ class PredictionGraderApplication {
         val userCount = successList.size
         val totalTPE = successList.sumByDouble { it.second }
         val averageTPE = totalTPE / userCount
+        val highestTPE = successList.sortedByDescending { it.second }.first().second
         val failureTPE = averageTPE / 2
 
         return "<b>Errors:</b><br>" +
                 errorList.sortedBy { it.first.toLowerCase() }.joinToString("<br>") {
                     "<font color=\"red\"><b>${it.first} ${it.second}</b></font>"
                 } + "<br><br><b>Please verify post times manually.</b><br><br>" +
-                "User count: $userCount<br>Total TPE: $totalTPE<br>Average TPE: $averageTPE<br><br>" +
+                "User count: $userCount<br>Total TPE: $totalTPE<br>Average TPE: $averageTPE<br>Highest TPE: $highestTPE<br><br>" +
                 successList.sortedBy { it.first.toLowerCase() }.joinToString("<br>") {
                     if (it.second > failureTPE) {
                         "${it.first} ${it.second}"
