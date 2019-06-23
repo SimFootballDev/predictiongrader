@@ -27,7 +27,7 @@ class PredictionGraderApplication {
     ): String {
 
         val correctPredictionList =
-                correctPredictions.toLowerCase().split(",").map { Prediction.fromName(it) }
+                correctPredictions.toLowerCase().split(",").map { Prediction.fromName(it)!! }
 
         val documentList = ArrayList<Document>()
 
@@ -145,10 +145,12 @@ class PredictionGraderApplication {
     enum class Prediction(val predictionName: String) {
 
         BALTIMORE_HAWKS("hawks"),
+        CHICAGO_BUTCHERS("butchers"),
         COLORADO_YETI("yeti"),
         PHILADELPHIA_LIBERTY("liberty"),
         YELLOWKNIFE_WRAITHS("wraiths"),
         ARIZONA_OUTLAWS("outlaws"),
+        AUSTIN_COPPERHEADS("copperheads"),
         NEW_ORLEANS_SECOND_LINE("secondline"),
         ORANGE_COUNTY_OTTERS("otters"),
         SAN_JOSE_SABERCATS("sabercats");
