@@ -66,16 +66,22 @@ class PredictionGraderApplication {
                 var currentIndex = 0
 
                 while (currentIndex < content.length &&
-                        content.substring(currentIndex).contains("emo&:")) {
+                        content.substring(currentIndex).contains(":")) {
 
-                    val startIndex = content.indexOf("emo&:", currentIndex) + 5
+                    val startIndex = content.indexOf(":", currentIndex) + 1
                     val endIndex = content.indexOf(":", startIndex)
 
-                    Prediction.fromName(content.substring(startIndex, endIndex))?.let {
-                        predictionList.add(it)
+                    currentIndex = if (endIndex > 0) {
+                        val prediction = Prediction.fromName(content.substring(startIndex, endIndex))
+                        if (prediction == null) {
+                            startIndex + 1
+                        } else {
+                            predictionList.add(prediction)
+                            endIndex + 1
+                        }
+                    } else {
+                        content.length
                     }
-
-                    currentIndex = endIndex + 1
                 }
 
                 var correctPredictionCount = 0
