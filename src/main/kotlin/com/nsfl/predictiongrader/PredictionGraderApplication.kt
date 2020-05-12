@@ -159,6 +159,8 @@ class PredictionGraderApplication {
         AUSTIN_COPPERHEADS("copperheads"),
         NEW_ORLEANS_SECOND_LINE("secondline"),
         ORANGE_COUNTY_OTTERS("otters"),
+        HONOLULU_HAHALUA("hahalua"),
+        SARASOTA_SAILFISH("sailfish"),
         SAN_JOSE_SABERCATS("sabercats");
 
         companion object {
