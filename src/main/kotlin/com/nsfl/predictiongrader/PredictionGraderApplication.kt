@@ -2,6 +2,7 @@ package com.nsfl.predictiongrader
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.nield.kotlinstatistics.*
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.web.bind.annotation.RequestMapping
@@ -130,6 +131,7 @@ class PredictionGraderApplication {
 
         val userCount = successList.size
         val totalTPE = successList.sumByDouble { it.second }
+        val modeTPE = successList.map{ it.second }.mode().joinToString()
         val averageTPE = totalTPE / userCount
         val highestTPE = successList.sortedByDescending { it.second }.first().second
         val failureTPE = averageTPE / 2
@@ -138,7 +140,7 @@ class PredictionGraderApplication {
                 errorList.sortedBy { it.first.toLowerCase() }.joinToString("<br>") {
                     "<font color=\"red\"><b>${it.first} ${it.second}</b></font>"
                 } + "<br><br><b>Please verify post times manually.</b><br><br>" +
-                "User count: $userCount<br>Total TPE: $totalTPE<br>Average TPE: $averageTPE<br>Highest TPE: $highestTPE<br><br>" +
+                "User count: $userCount<br>Total TPE: $totalTPE<br>Average TPE: $averageTPE<br>Mode TPE: $modeTPE<br>Highest TPE: $highestTPE<br><br>" +
                 successList.sortedBy { it.first.toLowerCase() }.joinToString("<br>") {
                     if (it.second > failureTPE) {
                         "${it.first} ${it.second}"
