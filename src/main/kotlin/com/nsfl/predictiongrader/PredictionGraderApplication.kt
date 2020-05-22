@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.regex.Pattern
+import java.util.regex.Matcher
 
 @RestController
 @SpringBootApplication
@@ -16,7 +17,7 @@ class PredictionGraderApplication {
 
     @RequestMapping("/")
     fun getIndex(): String {
-        return "<form action=/results>Post URL<br><input name=postUrl><br><br>Correct Predictions (comma separated)<br><input name=correctPredictions><br><br>Base TPE Reward<br><input name=baseTPE value=0><br><br>Per Prediction TPE Reward<br><input name=perPredictionTPE value=0.5><br><br><input type=submit></form>"
+        return "<form action=/results>Post URL<br><input name=postUrl><br><br>Correct Predictions (comma separated)<br><textarea name=correctPredictions  rows='3' cols='70'>For example: wraiths,yeti,liberty,sabercats,copperheads,outlaws</textarea><br><br>Base TPE Reward<br><input name=baseTPE value=0><br><br>Per Prediction TPE Reward<br><input name=perPredictionTPE value=0.5><br><br><input type=submit></form>"
     }
 
     @RequestMapping("/results")
@@ -28,7 +29,7 @@ class PredictionGraderApplication {
     ): String {
 
         val correctPredictionList =
-                correctPredictions.toLowerCase().split(",").map { Prediction.fromName(it)!! }
+                correctPredictions.toLowerCase().split(",").map { it }
 
         val documentList = ArrayList<Document>()
 
@@ -63,40 +64,27 @@ class PredictionGraderApplication {
                 val username = element.getElementsByClass("normalname").text()
                 val content = element.getElementsByClass("postcolor").toString()
 
-                val predictionList = arrayListOf<Prediction>()
-                var currentIndex = 0
+                val predictionList = arrayListOf<String>()
 
-                while (currentIndex < content.length &&
-                        content.substring(currentIndex).contains(":")) {
+                val my_pattern = ":([a-z]*):".toRegex()
+                var matches = my_pattern.findAll(content)
 
-                    val startIndex = content.indexOf(":", currentIndex) + 1
-                    val endIndex = content.indexOf(":", startIndex)
-
-                    currentIndex = if (endIndex > 0) {
-                        val prediction = Prediction.fromName(content.substring(startIndex, endIndex))
-                        if (prediction == null) {
-                            startIndex + 1
-                        } else {
-                            predictionList.add(prediction)
-                            endIndex + 1
-                        }
-                    } else {
-                        content.length
-                    }
+                matches.forEach { matchResult ->
+                  predictionList.add(matchResult.groupValues[1])
                 }
 
                 var correctPredictionCount = 0
 
                 if (predictionList.size == correctPredictionList.size) {
                     predictionList.forEachIndexed { index, prediction ->
-                        if (correctPredictionList[index] == prediction) {
+                        if (correctPredictionList[index].contains(prediction)) {
                             correctPredictionCount++
                         }
                     }
                 } else if (predictionList.size == correctPredictionList.size * 3) {
                     predictionList.forEachIndexed { index, prediction ->
                         if (index % 3 == 2
-                                && correctPredictionList[index - (((index / 3) + 1) * 2)] == prediction) {
+                                && correctPredictionList[index - (((index / 3) + 1) * 2)].contains(prediction)) {
                             correctPredictionCount++
                         }
                     }
@@ -124,6 +112,7 @@ class PredictionGraderApplication {
                         errorList.add(result)
                     }
                 } else if (documentIndex != 0 || elementIndex != 0) {
+
                     errorList.add(result)
                 }
             }
@@ -136,7 +125,7 @@ class PredictionGraderApplication {
         val highestTPE = successList.sortedByDescending { it.second }.first().second
         val failureTPE = averageTPE / 2
 
-        return "<b>Errors:</b><br>" +
+        return "<b>Errors (please verify manually, users with a positive score have likely posted twice):</b><br>" +
                 errorList.sortedBy { it.first.toLowerCase() }.joinToString("<br>") {
                     "<font color=\"red\"><b>${it.first} ${it.second}</b></font>"
                 } + "<br><br><b>Please verify post times manually.</b><br><br>" +
@@ -148,27 +137,6 @@ class PredictionGraderApplication {
                         "<font color=\"red\"><b>${it.first} ${it.second}</b></font>"
                     }
                 }
-    }
-
-    enum class Prediction(val predictionName: String) {
-
-        BALTIMORE_HAWKS("hawks"),
-        CHICAGO_BUTCHERS("butchers"),
-        COLORADO_YETI("yeti"),
-        PHILADELPHIA_LIBERTY("liberty"),
-        YELLOWKNIFE_WRAITHS("wraiths"),
-        ARIZONA_OUTLAWS("outlaws"),
-        AUSTIN_COPPERHEADS("copperheads"),
-        NEW_ORLEANS_SECOND_LINE("secondline"),
-        ORANGE_COUNTY_OTTERS("otters"),
-        HONOLULU_HAHALUA("hahalua"),
-        SARASOTA_SAILFISH("sailfish"),
-        SAN_JOSE_SABERCATS("sabercats");
-
-        companion object {
-            fun fromName(predictionName: String) =
-                    values().find { it.predictionName == predictionName }
-        }
     }
 }
 
