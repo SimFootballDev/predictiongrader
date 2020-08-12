@@ -17,7 +17,7 @@ class PredictionGraderApplication {
 
     @RequestMapping("/")
     fun getIndex(): String {
-        return "<form action=/results>Post URL<br><input name=postUrl><br><br>Correct Predictions (comma separated)<br><textarea name=correctPredictions  rows='3' cols='70'>For example: wraiths,yeti,liberty,sabercats,copperheads,outlaws</textarea><br><br>Base TPE Reward<br><input name=baseTPE value=0><br><br>Per Prediction TPE Reward<br><input name=perPredictionTPE value=0.5><br><br><input type=submit></form>"
+        return "<form action=/results>Post URL<br><input name=postUrl><br><br>Correct Predictions (comma separated)<br><textarea name=correctPredictions  rows='3' cols='70'>For example: BAL,CHI,COL,PHI,SAR,YKW,ARI,AUS,HON,NOLA,OCO,SJS</textarea><br><br>Base TPE Reward<br><input name=baseTPE value=0><br><br>Per Prediction TPE Reward<br><input name=perPredictionTPE value=0.5><br><br><input type=submit></form>"
     }
 
     @RequestMapping("/results")
@@ -38,7 +38,7 @@ class PredictionGraderApplication {
         documentList.add(firstDocument)
 
         val pageCount = try {
-            val startIndex = firstDocumentBody.indexOf("Pages:</a>")
+            val startIndex = firstDocumentBody.indexOf("Pages (")
             val endIndex = firstDocumentBody.indexOf(")", startIndex)
             firstDocumentBody.substring(startIndex, endIndex)
                     .replace(Pattern.compile("[^0-9.]").toRegex(), "")
@@ -47,10 +47,10 @@ class PredictionGraderApplication {
             1
         }
 
-        for (i in 1..(pageCount - 1)) {
+        for (i in 2..(pageCount)) {
             documentList.add(
                     Jsoup.connect(
-                            "$postUrl&st=${i * 14}"
+                            "$postUrl&page=${i}"
                     ).get()
             )
         }
@@ -59,18 +59,18 @@ class PredictionGraderApplication {
         val errorList = ArrayList<Pair<String, Double>>()
 
         documentList.forEachIndexed { documentIndex, document ->
-            document.body().getElementsByClass("post-normal").forEachIndexed { elementIndex, element ->
+            document.body().getElementsByClass("post classic ").forEachIndexed { elementIndex, element ->
 
-                val username = element.getElementsByClass("normalname").text()
-                val content = element.getElementsByClass("postcolor").toString()
+                val username = element.getElementsByClass("largetext").text()
+                val content = element.getElementsByClass("post_body scaleimages").toString()
 
                 val predictionList = arrayListOf<String>()
 
-                val my_pattern = ":([a-z]*):".toRegex()
+                val my_pattern = "alt=\"([A-Z]+)\"".toRegex()
                 var matches = my_pattern.findAll(content)
 
                 matches.forEach { matchResult ->
-                  predictionList.add(matchResult.groupValues[1])
+                    predictionList.add(matchResult.groupValues[1].toLowerCase())
                 }
 
                 var correctPredictionCount = 0
