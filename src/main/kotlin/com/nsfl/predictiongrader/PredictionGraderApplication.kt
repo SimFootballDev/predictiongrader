@@ -33,7 +33,9 @@ class PredictionGraderApplication {
 
         val documentList = ArrayList<Document>()
 
-        val firstDocument = Jsoup.connect(postUrl).get()
+        val firstDocument = Jsoup.connect(postUrl)
+                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0")
+                                .get()
         val firstDocumentBody = firstDocument.body().toString()
         documentList.add(firstDocument)
 
@@ -51,7 +53,8 @@ class PredictionGraderApplication {
             documentList.add(
                     Jsoup.connect(
                             "$postUrl&page=${i}"
-                    ).get()
+                    ).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0")
+                    .get()
             )
         }
 
